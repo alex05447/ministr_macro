@@ -5,11 +5,14 @@ use {
 };
 
 pub(crate) fn nestr_impl(item: TokenStream2) -> TokenStream {
+    let macro_name = "nestr";
+
     let mut iter = item.into_iter();
 
-    let string_tt = iter
-        .next()
-        .expect("`nestr` macro takes one non-empty quoted string literal - none were provided");
+    let string_tt = iter.next().expect(&format!(
+        "`{}` macro takes one non-empty quoted string literal - none were provided",
+        macro_name
+    ));
 
     let result = match string_tt {
         TokenTree2::Literal(string_lit) => {
@@ -17,23 +20,24 @@ pub(crate) fn nestr_impl(item: TokenStream2) -> TokenStream {
             let orig_string = string_lit.to_string();
             assert!(
                 orig_string.len() >= 3,
-                "`nestr` macro takes one non-empty quoted string literal - `{}` was provided",
+                "`{}` macro takes one non-empty quoted string literal - `{}` was provided",
+                macro_name,
                 orig_string
             );
 
             // Trim quotes: ["asdf"] -> [asdf].
-            if let Some(string) = orig_string.strip_prefix("\"") {
-                if let Some(_) = string.strip_suffix("\"") {
+            if let Some(no_prefix_string) = orig_string.strip_prefix("\"") {
+                if let Some(_no_suffix_string) = no_prefix_string.strip_suffix("\"") {
                     let string_lit: Literal2 = string_lit.into();
 
                     TokenStream::from(quote!(
                         unsafe { ministr::NonEmptyStr::new_unchecked(#string_lit) }
                     ))
                 } else {
-                    panic!("`nestr` macro takes one non-empty quoted string literal - `{}` does not end with a quote", orig_string);
+                    panic!("`{}` macro takes one non-empty quoted string literal - `{}` does not end with a quote", macro_name, orig_string);
                 }
             } else {
-                panic!("`nestr` macro takes one non-empty quoted string literal - `{}` does not start with a quote", orig_string);
+                panic!("`{}` macro takes one non-empty quoted string literal - `{}` does not start with a quote", macro_name, orig_string);
             }
         }
 
@@ -41,22 +45,23 @@ pub(crate) fn nestr_impl(item: TokenStream2) -> TokenStream {
 
         TokenTree2::Ident(ident) => {
             panic!(
-                "`nestr` macro takes one non-empty quoted string literal - ident `{}` was provided",
-                ident
+                "`{}` macro takes one non-empty quoted string literal - ident `{}` was provided",
+                macro_name, ident
             );
         }
 
         TokenTree2::Punct(punct) => {
             panic!(
-                "`nestr` macro takes one non-empty quoted string literal - punct `{}` was provided",
-                punct
+                "`{}` macro takes one non-empty quoted string literal - punct `{}` was provided",
+                macro_name, punct
             );
         }
     };
 
     assert!(
         iter.next().is_none(),
-        "`nestr` macro takes one non-empty quoted string literal - multiple were provided"
+        "`{}` macro takes one non-empty quoted string literal - multiple were provided",
+        macro_name
     );
 
     result
