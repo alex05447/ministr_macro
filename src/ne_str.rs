@@ -4,8 +4,8 @@ use {
     quote::quote,
 };
 
-pub(crate) fn nestr_impl(item: TokenStream2) -> TokenStream {
-    let macro_name = "nestr";
+pub(crate) fn nestr_impl(item: TokenStream2, owned: bool) -> TokenStream {
+    let macro_name = if owned { "nestring" } else { "nestr" };
 
     let mut iter = item.into_iter();
 
@@ -30,9 +30,15 @@ pub(crate) fn nestr_impl(item: TokenStream2) -> TokenStream {
                 if let Some(_no_suffix_string) = no_prefix_string.strip_suffix("\"") {
                     let string_lit: Literal2 = string_lit.into();
 
-                    TokenStream::from(quote!(
-                        unsafe { ministr::NonEmptyStr::new_unchecked(#string_lit) }
-                    ))
+                    if owned {
+                        TokenStream::from(quote!(
+                            unsafe { ministr::NonEmptyString::from_unchecked(#string_lit) }
+                        ))
+                    } else {
+                        TokenStream::from(quote!(
+                            unsafe { ministr::NonEmptyStr::new_unchecked(#string_lit) }
+                        ))
+                    }
                 } else {
                     panic!("`{}` macro takes one non-empty quoted string literal - `{}` does not end with a quote", macro_name, orig_string);
                 }
@@ -41,7 +47,7 @@ pub(crate) fn nestr_impl(item: TokenStream2) -> TokenStream {
             }
         }
 
-        TokenTree2::Group(group) => nestr_impl(group.stream()),
+        TokenTree2::Group(group) => nestr_impl(group.stream(), owned),
 
         TokenTree2::Ident(ident) => {
             panic!(

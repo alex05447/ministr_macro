@@ -26,5 +26,11 @@ pub fn str_hash_fnv1a_64(item: TokenStream) -> TokenStream {
 /// Creates a [`NonEmptyStr`](ministr::NonEmptyStr) from a compile-time checked non-empty string literal.
 #[proc_macro]
 pub fn nestr(item: TokenStream) -> TokenStream {
-    ne_str::nestr_impl(item.into())
+    ne_str::nestr_impl(item.into(), false)
+}
+
+/// Creates a [`NonEmptyString`](ministr::NonEmptyString) from a compile-time checked non-empty string literal.
+#[proc_macro]
+pub fn nestring(item: TokenStream) -> TokenStream {
+    ne_str::nestr_impl(item.into(), true)
 }
