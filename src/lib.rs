@@ -8,7 +8,7 @@ use proc_macro::TokenStream;
 /// Hashes the string literal to a `u64` using the Rust's [`default hasher`](std::collections::hash_map::DefaultHasher) (i.e. one used in the [`HashMap`](std::collections::HashMap)).
 #[proc_macro]
 pub fn str_hash_default(item: TokenStream) -> TokenStream {
-    str_hash::str_hash_impl(item, ministr::str_hash_default, "str_hash_default")
+    str_hash::str_hash_impl(item, ministr::str_hash, "str_hash")
 }
 
 /// Hashes the string literal to a `u32` using the FNV1a (32b) hash.

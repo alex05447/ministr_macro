@@ -23,10 +23,12 @@ pub(crate) fn str_hash_impl<H: ToLiteral>(
 ) -> TokenStream {
     let mut iter = item.into_iter();
 
-    let string = iter.next().expect(&format!(
-        "`{}` macro takes one non-empty quoted string literal - none were provided",
-        macro_name
-    ));
+    let string = iter.next().unwrap_or_else(|| {
+        panic!(
+            "`{}` macro takes one non-empty quoted string literal - none were provided",
+            macro_name
+        )
+    });
 
     let result = match string {
         TokenTree::Literal(string_lit) => {
@@ -35,21 +37,25 @@ pub(crate) fn str_hash_impl<H: ToLiteral>(
             assert!(
                 orig_string.len() >= 3,
                 "`{}` macro takes one non-empty quoted string literal - `{}` was provided",
-                orig_string,
-                macro_name
+                macro_name,
+                orig_string
             );
 
             // Trim quotes: ["asdf"] -> [asdf].
             if let Some(string) = orig_string.strip_prefix("\"") {
                 if let Some(string) = string.strip_suffix("\"") {
-                    let hash_lit = hash(&string).to_literal();
-
-                    TokenStream::from(TokenTree::Literal(hash_lit))
+                    TokenStream::from(TokenTree::Literal(hash(string).to_literal()))
                 } else {
-                    panic!("`{}` macro takes one non-empty quoted string literal - `{}` does not end with a quote", orig_string, macro_name);
+                    panic!(
+                        "`{}` macro takes one non-empty quoted string literal - `{}` does not end with a quote",
+                        macro_name, orig_string
+                    );
                 }
             } else {
-                panic!("`{}` macro takes one non-empty quoted string literal - `{}` does not start with a quote", orig_string, macro_name);
+                panic!(
+                    "`{}` macro takes one non-empty quoted string literal - `{}` does not start with a quote",
+                    macro_name, orig_string
+                );
             }
         }
 
@@ -58,14 +64,14 @@ pub(crate) fn str_hash_impl<H: ToLiteral>(
         TokenTree::Ident(ident) => {
             panic!(
                 "`{}` macro takes one non-empty quoted string literal - ident `{}` was provided",
-                ident, macro_name
+                macro_name, ident
             );
         }
 
         TokenTree::Punct(punct) => {
             panic!(
                 "`{}` macro takes one non-empty quoted string literal - punct `{}` was provided",
-                punct, macro_name
+                macro_name, punct
             );
         }
     };

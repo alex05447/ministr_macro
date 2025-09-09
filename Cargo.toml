@@ -2,7 +2,7 @@
 name = "ministr_macro"
 version = "0.1.0"
 authors = ["N/A <N/A>"]
-edition = "2018"
+edition = "2024"
 
 [lib]
 proc-macro = true

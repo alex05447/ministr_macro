@@ -1,6 +1,6 @@
 use {
     proc_macro::TokenStream,
-    proc_macro2::{Literal as Literal2, TokenStream as TokenStream2, TokenTree as TokenTree2},
+    proc_macro2::{TokenStream as TokenStream2, TokenTree as TokenTree2},
     quote::quote,
 };
 
@@ -9,10 +9,12 @@ pub(crate) fn nestr_impl(item: TokenStream2, owned: bool) -> TokenStream {
 
     let mut iter = item.into_iter();
 
-    let string_tt = iter.next().expect(&format!(
-        "`{}` macro takes one non-empty quoted string literal - none were provided",
-        macro_name
-    ));
+    let string_tt = iter.next().unwrap_or_else(|| {
+        panic!(
+            "`{}` macro takes one non-empty quoted string literal - none were provided",
+            macro_name
+        )
+    });
 
     let result = match string_tt {
         TokenTree2::Literal(string_lit) => {
@@ -28,8 +30,6 @@ pub(crate) fn nestr_impl(item: TokenStream2, owned: bool) -> TokenStream {
             // Trim quotes: ["asdf"] -> [asdf].
             if let Some(no_prefix_string) = orig_string.strip_prefix("\"") {
                 if let Some(_no_suffix_string) = no_prefix_string.strip_suffix("\"") {
-                    let string_lit: Literal2 = string_lit.into();
-
                     if owned {
                         TokenStream::from(quote!(
                             unsafe { ministr::NonEmptyString::from_unchecked(#string_lit) }
@@ -40,10 +40,16 @@ pub(crate) fn nestr_impl(item: TokenStream2, owned: bool) -> TokenStream {
                         ))
                     }
                 } else {
-                    panic!("`{}` macro takes one non-empty quoted string literal - `{}` does not end with a quote", macro_name, orig_string);
+                    panic!(
+                        "`{}` macro takes one non-empty quoted string literal - `{}` does not end with a quote",
+                        macro_name, orig_string
+                    );
                 }
             } else {
-                panic!("`{}` macro takes one non-empty quoted string literal - `{}` does not start with a quote", macro_name, orig_string);
+                panic!(
+                    "`{}` macro takes one non-empty quoted string literal - `{}` does not start with a quote",
+                    macro_name, orig_string
+                );
             }
         }
 
